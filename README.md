@@ -1,4 +1,31 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## WhatsApp Clone using Next.js and Firebase by Ricky Francis Rozario
+
+View the app live on [WhatsApp-Clone](https://whatsapp-clone-ricky.vercel.app/).
+
+This is a WhatsApp Clone created with [Next.js](https://nextjs.org/) and the server is [Firebase FireStore](https://firebase.google.com/)
+
+The purpose of this project is to accomplish WhatsApp like functionalities using next.js and firebase.
+
+## Functionalities
+
+A user can enjoy the following functionalities currently in the app:
+
+1. Login with Google
+2. Start a new chat with another recipient by the recipient's email ID
+3. Send textual messages, emojis, send images
+4. All of the chats are realtime one to one communication
+5. See last active of a user/recipient
+6. See message sent time
+7. User's and Recipient's profile picture is fetched from Google and shown as user avatar in the top left corner, in the chat list and in the current chat screen.
+8. Logout
+
+## First things first
+
+You will need to add your own firebase api keys to your environment variable. I suggest you add them to .env.local file and you are good to go. You can add all of the environnement variables like this:
+
+```
+NEXT_PUBLIC_apiKey=YourAPIKey
+```
 
 ## Getting Started
 

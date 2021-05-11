@@ -5,7 +5,6 @@ import ChatScreen from '../../components/ChatScreen';
 import { auth, db } from '../../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import getRecipientEmail from '../../utils/getRecipientEmail';
-import { useState } from 'react';
 
 import Router from 'next/router';
 import NProgress from 'nprogress';

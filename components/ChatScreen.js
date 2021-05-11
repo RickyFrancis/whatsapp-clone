@@ -16,7 +16,6 @@ import TimeAgo from 'timeago-react';
 import { ThreeBounce } from 'better-react-spinkit';
 import 'emoji-mart/css/emoji-mart.css';
 import { Picker } from 'emoji-mart';
-import Tooltip from '@material-ui/core/Tooltip';
 
 function ChatScreen({ chat, messages }) {
   const [user] = useAuthState(auth);
@@ -85,13 +84,19 @@ function ChatScreen({ chat, messages }) {
       { merge: true }
     );
 
-    if (data) {
+    const isFileImage = (data) => {
+      return data && data.startsWith('data:image/') ? true : false;
+    };
+
+    if (isFileImage(data)) {
       db.collection('chats').doc(router.query.id).collection('messages').add({
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         message: data,
         user: user.email,
         photoURL: user.photoURL,
       });
+    } else if (!isFileImage(data)) {
+      alert('Only image files are allowed!');
     } else {
       db.collection('chats').doc(router.query.id).collection('messages').add({
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -246,7 +251,7 @@ const HeaderInformation = styled.div`
 const HeaderIcons = styled.div``;
 
 const EndOfMessage = styled.span`
-  /* margin-bottom: 60px; */
+  margin-bottom: 60px;
 `;
 const MessageContainer = styled.div`
   padding: 30px;
