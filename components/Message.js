@@ -2,21 +2,59 @@ import moment from 'moment';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import styled from 'styled-components';
 import { auth } from '../firebase';
+import Lightbox from 'react-image-lightbox';
+import 'react-image-lightbox/style.css';
+import { useState } from 'react';
 import { ThreeBounce } from 'better-react-spinkit';
 
 function Message({ user, message }) {
   const [userLoggedIn] = useAuthState(auth);
+  const [isLightBoxOpen, setIsLightBoxOpen] = useState(false);
 
   const TypeOfMessage = user === userLoggedIn.email ? Sender : Receiver;
 
   return (
     <Container>
-      <TypeOfMessage>
-        {message.message}
-        <Timestamp>
-          {message.timestamp ? moment(message.timestamp).format('LT') : '...'}
-        </Timestamp>
-      </TypeOfMessage>
+      {message.message.startsWith('data:image/') ? (
+        <TypeOfMessage>
+          {isLightBoxOpen && (
+            <Lightbox
+              mainSrc={message.message}
+              onCloseRequest={(e) => {
+                setIsLightBoxOpen(false);
+              }}
+            />
+          )}
+          <img
+            src={message.message}
+            alt="Attached Image"
+            style={{ maxWidth: '300px' }}
+            onClick={(e) => {
+              setIsLightBoxOpen(true);
+            }}
+          />
+          <Timestamp>
+            {message.timestamp ? (
+              moment(message.timestamp).format('LT')
+            ) : (
+              <ThreeBounce color="#3CBC28" size={3} />
+            )}
+          </Timestamp>
+        </TypeOfMessage>
+      ) : (
+        <TypeOfMessage
+          style={message.message.length > 100 ? { width: 'auto' } : {}}
+        >
+          {message.message}
+          <Timestamp>
+            {message.timestamp ? (
+              moment(message.timestamp).format('LT')
+            ) : (
+              <ThreeBounce color="#3CBC28" size={3} />
+            )}
+          </Timestamp>
+        </TypeOfMessage>
+      )}
     </Container>
   );
 }
@@ -27,6 +65,7 @@ const Container = styled.div``;
 
 const MessageElement = styled.p`
   width: fit-content;
+  word-wrap: break-word;
   padding: 15px;
   border-radius: 8px;
   margin: 10px;

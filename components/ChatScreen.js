@@ -8,19 +8,23 @@ import { useRouter } from 'next/router';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import InsertEmoticonIcon from '@material-ui/icons/InsertEmoticon';
 import MicIcon from '@material-ui/icons/Mic';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import firebase from 'firebase';
 import Message from './Message';
 import getRecipientEmail from '../utils/getRecipientEmail';
 import TimeAgo from 'timeago-react';
-import { useEffect } from 'react';
 import { ThreeBounce } from 'better-react-spinkit';
+import 'emoji-mart/css/emoji-mart.css';
+import { Picker } from 'emoji-mart';
+import Tooltip from '@material-ui/core/Tooltip';
 
 function ChatScreen({ chat, messages }) {
   const [user] = useAuthState(auth);
   const [input, setInput] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const endOfMessagesRef = useRef(null);
   const router = useRouter();
+
   const [messagesSnapshot] = useCollection(
     db
       .collection('chats')
@@ -65,9 +69,12 @@ function ChatScreen({ chat, messages }) {
       behavior: 'smooth',
       block: 'start',
     });
+    router.events.on('routeChangeStart', () => scrollToBottom());
+    router.events.on('routeChangeComplete', () => scrollToBottom());
+    router.events.on('routeChangeError', () => scrollToBottom());
   }, []);
 
-  const sendMessage = (e) => {
+  const sendMessage = (e, data) => {
     e.preventDefault();
 
     // Update last seen
@@ -78,15 +85,42 @@ function ChatScreen({ chat, messages }) {
       { merge: true }
     );
 
-    db.collection('chats').doc(router.query.id).collection('messages').add({
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      message: input,
-      user: user.email,
-      photoURL: user.photoURL,
-    });
+    if (data) {
+      db.collection('chats').doc(router.query.id).collection('messages').add({
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        message: data,
+        user: user.email,
+        photoURL: user.photoURL,
+      });
+    } else {
+      db.collection('chats').doc(router.query.id).collection('messages').add({
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        message: input,
+        user: user.email,
+        photoURL: user.photoURL,
+      });
+    }
 
     setInput('');
     scrollToBottom();
+  };
+
+  function getBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
+  const addEmoji = (e) => {
+    let emoji = e.native;
+    setInput(input.concat(emoji));
+  };
+
+  const showEmojiContainer = (e) => {
+    setShowEmojiPicker(!showEmojiPicker);
   };
 
   const recipient = recipientsSnapshot?.docs?.[0]?.data();
@@ -112,33 +146,69 @@ function ChatScreen({ chat, messages }) {
               )}
             </p>
           ) : (
-            <p>
-              &nbsp;
-              <ThreeBounce color="#3CBC28" size={5} />
-            </p>
+            <ThreeBounce
+              color="#3CBC28"
+              size={5}
+              style={{ marginLeft: '5px' }}
+            />
           )}
         </HeaderInformation>
         <HeaderIcons>
-          <IconButton>
-            <AttachFileIcon />
-          </IconButton>
+          <input
+            accept="image/*"
+            style={{ display: 'none' }}
+            id="icon-button-file"
+            type="file"
+            onChange={(e) =>
+              getBase64(e.target.files[0]).then((data) => {
+                sendMessage(e, data);
+              })
+            }
+          />
+          <label htmlFor="icon-button-file">
+            <IconButton aria-label="attach files" component="span">
+              <AttachFileIcon />
+            </IconButton>
+          </label>
+
           <IconButton>
             <MoreVertIcon />
           </IconButton>
         </HeaderIcons>
       </Header>
-      <MessageContainer>
+      <MessageContainer
+        onClick={(e) => {
+          setShowEmojiPicker(false);
+        }}
+      >
         {showMessages()}
+
         <EndOfMessage ref={endOfMessagesRef} />
       </MessageContainer>
-      <InputContainer>
-        <InsertEmoticonIcon />
-        <Input value={input} onChange={(e) => setInput(e.target.value)} />
-        <button hidden disabled={!input} type="submit" onClick={sendMessage}>
-          Send Message
-        </button>
-        <MicIcon />
-      </InputContainer>
+      <InputContainerParent>
+        <Picker
+          onSelect={addEmoji}
+          style={!showEmojiPicker ? { display: 'none' } : {}}
+        />
+        <InputContainer>
+          <IconButton
+            onClick={(e) => {
+              showEmojiContainer(e);
+            }}
+          >
+            <InsertEmoticonIcon />
+          </IconButton>
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Type your message and press enter to send"
+          />
+          <button hidden disabled={!input} type="submit" onClick={sendMessage}>
+            Send Message
+          </button>
+          <MicIcon />
+        </InputContainer>
+      </InputContainerParent>
     </Container>
   );
 }
@@ -175,8 +245,8 @@ const HeaderInformation = styled.div`
 
 const HeaderIcons = styled.div``;
 
-const EndOfMessage = styled.div`
-  margin-bottom: 60px;
+const EndOfMessage = styled.span`
+  /* margin-bottom: 60px; */
 `;
 const MessageContainer = styled.div`
   padding: 30px;
@@ -198,6 +268,17 @@ const Input = styled.input`
 const InputContainer = styled.form`
   display: flex;
   align-items: center;
+  padding: 10px;
+  position: sticky;
+  bottom: 0;
+  background-color: white;
+  z-index: 100;
+`;
+
+const InputContainerParent = styled.div`
+  display: flex;
+  flex-direction: column;
+
   padding: 10px;
   position: sticky;
   bottom: 0;

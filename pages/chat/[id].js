@@ -5,6 +5,16 @@ import ChatScreen from '../../components/ChatScreen';
 import { auth, db } from '../../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import getRecipientEmail from '../../utils/getRecipientEmail';
+import { useState } from 'react';
+
+import Router from 'next/router';
+import NProgress from 'nprogress';
+NProgress.configure({ showSpinner: false }); //nprogress module
+import 'nprogress/nprogress.css'; //styles of nprogress
+//Binding events.
+Router.events.on('routeChangeStart', () => NProgress.start());
+Router.events.on('routeChangeComplete', () => NProgress.done());
+Router.events.on('routeChangeError', () => NProgress.done());
 
 function Chat({ chat, messages }) {
   const [user] = useAuthState(auth);
