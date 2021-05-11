@@ -88,14 +88,14 @@ function ChatScreen({ chat, messages }) {
       return data && data.startsWith('data:image/') ? true : false;
     };
 
-    if (isFileImage(data)) {
+    if (data && data.length > 0 && isFileImage(data)) {
       db.collection('chats').doc(router.query.id).collection('messages').add({
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         message: data,
         user: user.email,
         photoURL: user.photoURL,
       });
-    } else if (!isFileImage(data)) {
+    } else if (data && data.length > 0 && !isFileImage(data)) {
       alert('Only image files are allowed!');
     } else {
       db.collection('chats').doc(router.query.id).collection('messages').add({
