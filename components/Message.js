@@ -6,12 +6,17 @@ import Lightbox from 'react-image-lightbox';
 import 'react-image-lightbox/style.css';
 import { useState } from 'react';
 import { ThreeBounce } from 'better-react-spinkit';
+import validURL from '../utils/validURL';
+import Link from '@material-ui/core/Link';
+import MetaContent from './MetaContent';
 
 function Message({ user, message }) {
   const [userLoggedIn] = useAuthState(auth);
   const [isLightBoxOpen, setIsLightBoxOpen] = useState(false);
 
   const TypeOfMessage = user === userLoggedIn.email ? Sender : Receiver;
+
+  const isMessageURL = validURL(message.message);
 
   return (
     <Container>
@@ -45,7 +50,16 @@ function Message({ user, message }) {
         <TypeOfMessage
           style={message.message.length > 100 ? { width: 'auto' } : {}}
         >
-          {message.message}
+          {isMessageURL ? (
+            <>
+              <Link href={message.message} target="_blank" rel="noopener">
+                {message.message}
+              </Link>
+              <MetaContent url={message.message} />
+            </>
+          ) : (
+            message.message
+          )}
           <Timestamp>
             {message.timestamp ? (
               moment(message.timestamp).format('LT')
